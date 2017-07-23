@@ -21,6 +21,7 @@ class Pdf extends Base
     private $info = null;
     private $html = null;
     private $result = null;
+    private $outline = null;
 
     private $defaultOptions = [
         'pdftohtml_path' => '/usr/bin/pdftohtml',
@@ -93,6 +94,15 @@ class Pdf extends Base
     }
 
     /**
+     * Get Outline object.
+     * @return Outline
+     */
+    public function getOutline()
+    {
+        return $this->outline;
+    }
+
+    /**
      * Set output dir.
      * @param string $dir
      * @return $this
@@ -159,6 +169,16 @@ class Pdf extends Base
                 $this->html->addPage(1, $content);
             }
         }
+        $pathOutline = $base_path . '-outline.html';
+        if (file_exists($pathOutline)) {
+            $param = $this->getOptions('html');
+            $content = file_get_contents($pathOutline);
+            $invalid_characters = '/[^\x9\xa\x20-\xD7FF\xE000-\xFFFD]/u';
+            $content = preg_replace($invalid_characters,'', $content);
+            if ($param['changeLinks'])
+                $content = $this->html->setLocalRefs($content);
+            $this->outline = $content;
+        }
 
         if ($this->getOptions('clearAfter'))
             $this->clearOutputDir($this->getOptions('removeOutputDir'));
@@ -223,6 +243,9 @@ class Pdf extends Base
                     break;
                 case 'noFrames':
                     $result = $value ? '-noframes' : '';
+                    break;
+                case 'noDrm':
+                    $result = $value ? '-nodrm' : '';
                     break;
             }
             $generated[] = $result;

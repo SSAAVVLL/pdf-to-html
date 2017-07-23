@@ -11,6 +11,7 @@ namespace TonchikTm\PdfToHtml;
 use DOMDocument;
 use DOMXPath;
 use Pelago\Emogrifier;
+use tidy;
 
 /**
  * This class creates a collection of html pages with some improvements.
@@ -49,6 +50,18 @@ class Html extends Base
 
         if ($this->getOptions('inlineImages')) {
             $content = $this->setInlineImages($content);
+        }
+
+        if ($this->getOptions('removeFontFamily')) {
+            $content = $this->removeFontFamily($content);
+        }
+
+        if ($this->getOptions('removeDots')) {
+            $content = $this->removeDots($content);
+        }
+
+        if ($this->getOptions('changeLinks')) {
+            $content = $this->setLocalRefs($content);
         }
 
         if ($this->getOptions('onlyContent')) {
@@ -96,6 +109,7 @@ class Html extends Base
      */
     private function setInlineImages($content)
     {
+
         $dom = new DOMDocument();
         $dom->loadHTML($content);
         $xpath = new DOMXPath($dom);
@@ -112,6 +126,45 @@ class Html extends Base
         }
         unset($dom, $xpath, $images, $imageData);
         return $content;
+    }
+
+    /**
+     * The method looks for refs and replaces the href attribute.
+     * @param string $content
+     * @return string
+     */
+    public function setLocalRefs($content)
+    {
+        $dom = new DOMDocument();
+        $dom->loadHTML($content);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace("xml", "http://www.w3.org/1999/xhtml");
+
+        $refs = $xpath->query("//a");
+
+        foreach ($refs as $ref) { /** @var \DOMNode $img  */
+            $href = $ref->getAttribute('href');
+            $ref->setAttribute('class', 'linkToPage');
+            if (strpos($href, $this->getOutputDir()) !== false) {
+                $filenameExt = substr($href, strrpos($href, '/'));
+                $filename = pathinfo($filenameExt, PATHINFO_FILENAME);
+                $page = substr($filename, strrpos($filename, '-') + 1);
+                $ref->setAttribute('href', '#'.$page);
+            }
+        }
+        $content = $dom->saveHtml();
+        unset($dom, $xpath, $refs, $imageData);
+        return $content;
+    }
+
+    /**
+     * The method remove all font-families from styles.
+     * @param string $content
+     * @return string
+     */
+    private function removeFontFamily($content)
+    {
+        return preg_replace('/font-family:.*?;/', '', $content);
     }
 
     /**
