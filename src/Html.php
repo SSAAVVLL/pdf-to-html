@@ -56,10 +56,6 @@ class Html extends Base
             $content = $this->removeFontFamily($content);
         }
 
-        if ($this->getOptions('removeDots')) {
-            $content = $this->removeDots($content);
-        }
-
         if ($this->getOptions('changeLinks')) {
             $content = $this->setLocalRefs($content);
         }
@@ -119,7 +115,7 @@ class Html extends Base
         foreach ($images as $img) { /** @var \DOMNode $img  */
             $attrImage = $img->getAttribute('src');
             $pi = pathinfo($attrImage);
-            $image = $this->getOutputDir() . '/' . $pi['basename'];
+            $image = $this->getOutputDir() . '/' . urldecode($pi['basename']);
             $imageData = base64_encode(file_get_contents($image));
             $src = 'data: ' . mime_content_type($image) . ';base64,' . $imageData;
             $content = str_replace($attrImage, $src, $content);

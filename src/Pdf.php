@@ -173,7 +173,7 @@ class Pdf extends Base
         if (file_exists($pathOutline)) {
             $param = $this->getOptions('html');
             $content = file_get_contents($pathOutline);
-            $invalid_characters = '/[^\x9\xa\x20-\xD7FF\xE000-\xFFFD]/u';
+            $invalid_characters = '/[^\x9\xa\x20-\x{D7FF}\x{E000}-\x{FFFD}]/u';
             $content = preg_replace($invalid_characters,'', $content);
             if ($param['changeLinks'])
                 $content = $this->html->setLocalRefs($content);
